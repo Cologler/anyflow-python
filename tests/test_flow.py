@@ -145,3 +145,16 @@ def test_next_props():
     def m2(c, n):
         assert n.is_nop
     flow.run()
+
+def test_async_middlewares():
+    import asyncio
+    flow = Flow()
+    @flow.use()
+    async def m1(c, n):
+        assert not n.is_nop
+        return await n()
+    @flow.use()
+    async def m2(c, n):
+        await asyncio.sleep(1)
+        return 2
+    assert asyncio.run(flow.run()) == 2
