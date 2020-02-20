@@ -77,16 +77,3 @@ class Flow:
         if middleware_factory is None:
             return lambda mf: self.use_factory(mf)
         self._factorys.append(middleware_factory)
-
-    def add_action(self, action: Callable[[FlowContext], Any]=None):
-        '''
-        add the action as a middleware, and auto call `next()` after the action executed.
-
-        *this method can use as decorator.*
-        '''
-        def middleware(ctx, next):
-            retval = action(ctx)
-            if next.is_nop:
-                return retval
-            return next()
-        return self.use(middleware)
