@@ -8,6 +8,7 @@
 from typing import Callable, Any, List
 from abc import ABC, abstractmethod
 
+from .err import Abort
 from .ctx import FlowContext
 
 #Next = Callable[[], Any]
@@ -60,10 +61,16 @@ class Flow:
             raise TypeError(f'excepted subclass of FlowContext, got {ctx_cls}')
         self._ctx_cls = ctx_cls
         self._factorys = []
+        self.suppress_abort = False
 
     def run(self, state: dict=None):
         ctx = self._ctx_cls(state)
-        return MiddlewareInvoker(self._factorys.copy(), ctx).invoke()
+        invoker = MiddlewareInvoker(self._factorys.copy(), ctx)
+        try:
+            return invoker.invoke()
+        except Abort:
+            if not self.suppress_abort:
+                raise
 
     def use(self, middleware: Middleware=None):
         '''
