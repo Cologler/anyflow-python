@@ -6,7 +6,7 @@
 # ----------
 
 from pytest import raises
-from anyflow import Flow, FlowContext
+from anyflow import Flow, FlowContext, Abort
 
 def test_use():
     flow = Flow()
@@ -158,3 +158,21 @@ def test_async_middlewares():
         await asyncio.sleep(1)
         return 2
     assert asyncio.run(flow.run()) == 2
+
+def test_abort():
+    flow = Flow()
+    @flow.use()
+    def _(c, n):
+        c.abort(None)
+        return 2
+    with raises(Abort):
+        flow.run()
+
+def test_abort_suppressed():
+    flow = Flow()
+    flow.suppress_abort = True
+    @flow.use()
+    def _(c, n):
+        c.abort(None)
+        return 2
+    assert flow.run() is None
