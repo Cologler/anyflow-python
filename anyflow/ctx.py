@@ -5,6 +5,8 @@
 #
 # ----------
 
+from .err import Abort
+
 class FlowContext:
     def __init__(self, state: dict=None):
         super().__init__()
@@ -13,5 +15,10 @@ class FlowContext:
             self._state.update(state)
 
     @property
-    def state(self):
+    def state(self) -> dict:
+        'get the state dict.'
         return self._state
+
+    def abort(self, reason):
+        'abort the flow by raise a `Abort`.'
+        raise Abort(reason=reason)
