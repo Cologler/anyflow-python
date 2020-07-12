@@ -115,6 +115,13 @@ def test_raise_errors():
     with raises(ValueError):
         flow.run()
 
+def test_create_flow_with_state():
+    flow = Flow(state={'a': 1})
+    @flow.use()
+    def m1(c: FlowContext, n):
+        assert c.state['a'] == 1
+    flow.run()
+
 def test_run_with_state():
     flow = Flow()
     @flow.use()
@@ -122,6 +129,15 @@ def test_run_with_state():
         assert c.state['a'] == 1
     flow.run({
         'a': 1
+    })
+
+def test_run_with_state_override_default_state():
+    flow = Flow(state={'a': 1})
+    @flow.use()
+    def m1(c: FlowContext, n):
+        assert c.state['a'] == 2
+    flow.run({
+        'a': 2
     })
 
 def test_use_state():

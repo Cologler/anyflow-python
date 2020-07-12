@@ -55,16 +55,22 @@ Middleware = Callable[[FlowContext, Next], Any]
 MiddlewareFactory = Callable[[FlowContext], Middleware]
 
 class Flow:
-    def __init__(self, ctx_cls=FlowContext):
+    def __init__(self, *, ctx_cls=FlowContext, state: dict=None):
         super().__init__()
         if not issubclass(ctx_cls, FlowContext):
             raise TypeError(f'excepted subclass of FlowContext, got {ctx_cls}')
         self._ctx_cls = ctx_cls
         self._factorys = []
         self.suppress_abort = False
+        self._state = {}
+        if state is not None:
+            self._state.update(state)
 
     def run(self, state: dict=None):
-        ctx = self._ctx_cls(state)
+        ctx_state = self._state.copy()
+        if state is not None:
+            ctx_state.update(state)
+        ctx = self._ctx_cls(ctx_state)
         invoker = MiddlewareInvoker(self._factorys.copy(), ctx)
         try:
             return invoker.invoke()
