@@ -62,14 +62,11 @@ class Flow:
         self._ctx_cls = ctx_cls
         self._factorys = []
         self.suppress_abort = False
-        self._state = {}
-        if state is not None:
-            self._state.update(state)
+        self._state = dict(state or ()) # make a clone
 
     def run(self, state: dict=None):
         ctx_state = self._state.copy()
-        if state is not None:
-            ctx_state.update(state)
+        ctx_state.update(state or ())
         ctx = self._ctx_cls(ctx_state)
         invoker = MiddlewareInvoker(self._factorys.copy(), ctx)
         try:

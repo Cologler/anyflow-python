@@ -10,9 +10,7 @@ from .err import Abort
 class FlowContext:
     def __init__(self, state: dict=None):
         super().__init__()
-        self._state = {}
-        if state is not None:
-            self._state.update(state)
+        self._state = dict(state or ()) # make a clone
 
     @property
     def state(self) -> dict:
