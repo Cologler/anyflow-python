@@ -88,12 +88,12 @@ def test_call_next():
     flow.run()
     assert vals == [1, 2]
 
-def test_call_next_only_once():
+def test_call_next_multi_times_should_only_called_once():
     flow = Flow()
     vals = []
 
     @flow.use()
-    def m1(c, n):
+    def _(c, n):
         vals.append('start')
         n()
         n()
@@ -101,11 +101,54 @@ def test_call_next_only_once():
         vals.append('end')
 
     @flow.use()
-    def m2(c, n):
+    def _(c, n):
         vals.append('val')
 
     flow.run()
     assert vals == ['start', 'val', 'end']
+
+def test_call_next_with_default_value():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        return n(1)
+
+    assert flow.run() == 1
+
+def test_call_next_multi_times_with_default_value_1():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        n(0)
+        n(1)
+        return n(2)
+
+    assert flow.run() == 0
+
+def test_call_next_multi_times_with_default_value_2():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        n()
+        n(1)
+        return n(2)
+
+    assert flow.run() is None
 
 def test_raise_errors():
     flow = Flow()
@@ -166,12 +209,14 @@ def test_async_middlewares():
     import asyncio
     flow = Flow()
     @flow.use()
-    async def m1(c, n):
-        assert not n.is_nop
+    def _(c, n): # without async keyword
+        return n()
+    @flow.use()
+    async def _(c, n): # with async keyword
         return await n()
     @flow.use()
-    async def m2(c, n):
-        await asyncio.sleep(1)
+    async def _(c, n): # with return value
+        await asyncio.sleep(0.001)
         return 2
     assert asyncio.run(flow.run()) == 2
 

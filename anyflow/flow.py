@@ -15,40 +15,49 @@ from .ctx import FlowContext
 
 
 class MiddlewareInvoker:
+    __slots__ = ('_ctx', '_factorys')
+
     def __init__(self, factorys: list, ctx: FlowContext):
         super().__init__()
         self._factorys = factorys
         self._ctx = ctx
 
     def invoke(self) -> Any:
-        return self.run_middleware(0)
+        if self._factorys:
+            return self.run_middleware(0)
 
-    def run_middleware(self, idx) -> Any:
-        if len(self._factorys) <= idx:
-            return None
+    def run_middleware(self, index) -> Any:
+        factory = self._factorys[index]
+        middleware = factory(self._ctx)
+        next = Next(self, index+1)
+        return middleware(self._ctx, next)
 
-        next = Next(self, idx+1)
-        factory = self._factorys[idx];
-        middleware = factory(self._ctx);
-        return middleware(self._ctx, next);
+    def has_next(self, next_index: int):
+        'return whether has the next middleware.'
+        return len(self._factorys) > next_index
 
 
 class Next:
-    def __init__(self, invoker: MiddlewareInvoker, next_idx: int):
+    __slots__ = ('_invoker', '_next_index', '_retvals')
+
+    def __init__(self, invoker: MiddlewareInvoker, next_index: int):
         super().__init__()
         self._invoker = invoker
-        self._next_idx = next_idx
+        self._next_index = next_index
         self._retvals = None
 
-    def __call__(self):
-        if self._retvals is None:
-            retval = self._invoker.run_middleware(self._next_idx)
-            self._retvals = (retval, )
+    def __call__(self, or_value=None):
+        if not self._retvals:
+            if self._invoker.has_next(self._next_index):
+                rv = self._invoker.run_middleware(self._next_index)
+            else:
+                rv = or_value
+            self._retvals = (rv, )
         return self._retvals[0]
 
     @property
     def is_nop(self):
-        return len(self._invoker._factorys) <= self._next_idx
+        return not self._invoker.has_next(self._next_index)
 
 
 Middleware = Callable[[FlowContext, Next], Any]
