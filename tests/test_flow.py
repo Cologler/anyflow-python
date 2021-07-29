@@ -209,12 +209,14 @@ def test_async_middlewares():
     import asyncio
     flow = Flow()
     @flow.use()
-    async def m1(c, n):
-        assert not n.is_nop
+    def _(c, n): # without async keyword
+        return n()
+    @flow.use()
+    async def _(c, n): # with async keyword
         return await n()
     @flow.use()
-    async def m2(c, n):
-        await asyncio.sleep(1)
+    async def _(c, n): # with return value
+        await asyncio.sleep(0.001)
         return 2
     assert asyncio.run(flow.run()) == 2
 

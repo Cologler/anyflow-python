@@ -15,20 +15,20 @@ from .ctx import FlowContext
 
 
 class MiddlewareInvoker:
+    __slots__ = ('_ctx', '_factorys')
+
     def __init__(self, factorys: list, ctx: FlowContext):
         super().__init__()
         self._factorys = factorys
         self._ctx = ctx
 
     def invoke(self) -> Any:
-        return self.run_middleware(0)
+        if self._factorys:
+            return self.run_middleware(0)
 
     def run_middleware(self, index) -> Any:
-        if len(self._factorys) <= index:
-            return None
-
-        factory = self._factorys[index];
-        middleware = factory(self._ctx);
+        factory = self._factorys[index]
+        middleware = factory(self._ctx)
         next = Next(self, index+1)
         return middleware(self._ctx, next)
 
@@ -57,7 +57,7 @@ class Next:
 
     @property
     def is_nop(self):
-        return len(self._invoker._factorys) <= self._next_index
+        return not self._invoker.has_next(self._next_index)
 
 
 Middleware = Callable[[FlowContext, Next], Any]
