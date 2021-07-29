@@ -27,10 +27,14 @@ class MiddlewareInvoker:
         if len(self._factorys) <= idx:
             return None
 
-        next = Next(self, idx+1)
         factory = self._factorys[idx];
         middleware = factory(self._ctx);
-        return middleware(self._ctx, next);
+        next = Next(self, idx+1)
+        return middleware(self._ctx, next)
+
+    def has_next(self, next_index: int):
+        'return whether has the next middleware.'
+        return len(self._factorys) > next_index
 
 
 class Next:
@@ -40,10 +44,14 @@ class Next:
         self._next_idx = next_idx
         self._retvals = None
 
-    def __call__(self):
+    def __call__(self, or_value=None):
+        if not self._invoker.has_next(self._next_idx):
+            return or_value
+
         if self._retvals is None:
             retval = self._invoker.run_middleware(self._next_idx)
             self._retvals = (retval, )
+
         return self._retvals[0]
 
     @property

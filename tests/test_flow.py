@@ -88,12 +88,12 @@ def test_call_next():
     flow.run()
     assert vals == [1, 2]
 
-def test_call_next_only_once():
+def test_call_next_multi_times_should_only_called_once():
     flow = Flow()
     vals = []
 
     @flow.use()
-    def m1(c, n):
+    def _(c, n):
         vals.append('start')
         n()
         n()
@@ -101,11 +101,24 @@ def test_call_next_only_once():
         vals.append('end')
 
     @flow.use()
-    def m2(c, n):
+    def _(c, n):
         vals.append('val')
 
     flow.run()
     assert vals == ['start', 'val', 'end']
+
+def test_call_next_with_default_value():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        return n(1)
+
+    assert flow.run() == 1
 
 def test_raise_errors():
     flow = Flow()
