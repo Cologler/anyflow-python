@@ -120,6 +120,36 @@ def test_call_next_with_default_value():
 
     assert flow.run() == 1
 
+def test_call_next_multi_times_with_default_value_1():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        n(0)
+        n(1)
+        return n(2)
+
+    assert flow.run() == 0
+
+def test_call_next_multi_times_with_default_value_2():
+    flow = Flow()
+
+    @flow.use()
+    def _(c, n):
+        return n()
+
+    @flow.use()
+    def _(c, n):
+        n()
+        n(1)
+        return n(2)
+
+    assert flow.run() is None
+
 def test_raise_errors():
     flow = Flow()
     @flow.use()

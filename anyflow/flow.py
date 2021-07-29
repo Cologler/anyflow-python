@@ -45,13 +45,12 @@ class Next:
         self._retvals = None
 
     def __call__(self, or_value=None):
-        if not self._invoker.has_next(self._next_idx):
-            return or_value
-
-        if self._retvals is None:
-            retval = self._invoker.run_middleware(self._next_idx)
-            self._retvals = (retval, )
-
+        if not self._retvals:
+            if self._invoker.has_next(self._next_idx):
+                rv = self._invoker.run_middleware(self._next_idx)
+            else:
+                rv = or_value
+            self._retvals = (rv, )
         return self._retvals[0]
 
     @property
