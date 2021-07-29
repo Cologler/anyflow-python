@@ -23,13 +23,13 @@ class MiddlewareInvoker:
     def invoke(self) -> Any:
         return self.run_middleware(0)
 
-    def run_middleware(self, idx) -> Any:
-        if len(self._factorys) <= idx:
+    def run_middleware(self, index) -> Any:
+        if len(self._factorys) <= index:
             return None
 
-        factory = self._factorys[idx];
+        factory = self._factorys[index];
         middleware = factory(self._ctx);
-        next = Next(self, idx+1)
+        next = Next(self, index+1)
         return middleware(self._ctx, next)
 
     def has_next(self, next_index: int):
@@ -38,16 +38,18 @@ class MiddlewareInvoker:
 
 
 class Next:
-    def __init__(self, invoker: MiddlewareInvoker, next_idx: int):
+    __slots__ = ('_invoker', '_next_index', '_retvals')
+
+    def __init__(self, invoker: MiddlewareInvoker, next_index: int):
         super().__init__()
         self._invoker = invoker
-        self._next_idx = next_idx
+        self._next_index = next_index
         self._retvals = None
 
     def __call__(self, or_value=None):
         if not self._retvals:
-            if self._invoker.has_next(self._next_idx):
-                rv = self._invoker.run_middleware(self._next_idx)
+            if self._invoker.has_next(self._next_index):
+                rv = self._invoker.run_middleware(self._next_index)
             else:
                 rv = or_value
             self._retvals = (rv, )
@@ -55,7 +57,7 @@ class Next:
 
     @property
     def is_nop(self):
-        return len(self._invoker._factorys) <= self._next_idx
+        return len(self._invoker._factorys) <= self._next_index
 
 
 Middleware = Callable[[FlowContext, Next], Any]
